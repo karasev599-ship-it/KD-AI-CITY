@@ -1,20 +1,62 @@
+import { timingSafeEqual } from 'node:crypto';
 import { run } from '@openai/agents';
 import { NextResponse } from 'next/server';
 import { director } from '@/lib/agents';
 
 export const runtime = 'nodejs';
 
+function hasValidOwnerKey(request: Request) {
+  const expectedKey = process.env.KD_AI_CITY_ACCESS_KEY;
+  const authorization = request.headers.get('authorization') ?? '';
+
+  if (!expectedKey || !authorization.startsWith('Bearer ')) return false;
+
+  const suppliedKey = authorization.slice('Bearer '.length);
+  const expected = Buffer.from(expectedKey);
+  const supplied = Buffer.from(suppliedKey);
+
+  return expected.length === supplied.length && timingSafeEqual(expected, supplied);
+}
+
 export async function POST(request: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.KD_AI_CITY_ACCESS_KEY) {
       return NextResponse.json(
-        { error: 'Добавь OPENAI_API_KEY в .env.local и Vercel Environment Variables. AI Director пока не подключён к модели.' },
+        { error: 'AI Director закрыт: сначала задай KD_AI_CITY_ACCESS_KEY в серверных переменных окружения.' },
         { status: 503 }
       );
     }
 
-    const body = await request.json();
-    const task = typeof body.task === 'string' ? body.task.trim() : '';
+    if (!hasValidOwnerKey(request)) {
+      return NextResponse.json(
+        { error: 'Ключ владельца не принят. Проверь его и попробуй ещё раз.' },
+        { status: 401 }
+      );
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'Добавь OPENAI_API_KEY в серверные переменные окружения. AI Director пока не подключён к модели.' },
+        { status: 503 }
+      );
+    }
+
+    const rawBody = await request.text();
+    if (Buffer.byteLength(rawBody, 'utf8') > 8192) {
+      return NextResponse.json({ error: 'Запрос слишком большой.' }, { status: 413 });
+    }
+
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: 'Некорректный JSON в запросе.' }, { status: 400 });
+    }
+
+    const task =
+      typeof body === 'object' && body !== null && 'task' in body && typeof body.task === 'string'
+        ? body.task.trim()
+        : '';
 
     if (!task || task.length > 4000) {
       return NextResponse.json(
