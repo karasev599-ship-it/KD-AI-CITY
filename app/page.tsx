@@ -2,23 +2,197 @@
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { Activity, Bot, Building2, ChartNoAxesCombined, CircleDollarSign, Code2, Command, Cpu, LayoutDashboard, Radio, Send, ShieldCheck, Sparkles, Users, Workflow } from 'lucide-react';
-const CityScene = dynamic(() => import('@/components/CityScene'), { ssr:false, loading:()=> <div className="sceneLoading">Загружаем город…</div> });
+
+const CityScene = dynamic(() => import('@/components/CityScene'), {
+  ssr: false,
+  loading: () => <div className="sceneLoading">Загружаем город…</div>,
+});
+
 const agents = [
- {name:'AI Director',role:'Главный координатор',dept:'HQ',status:'online',icon:Command,color:'blue'},
- {name:'Market Analyst',role:'Исследование и аналитика',dept:'TRADING',status:'working',icon:ChartNoAxesCombined,color:'cyan'},
- {name:'Dev Engineer',role:'Разработка продуктов',dept:'DEVELOPMENT',status:'online',icon:Code2,color:'violet'},
- {name:'Growth Agent',role:'Маркетинг и контент',dept:'MARKETING',status:'idle',icon:Sparkles,color:'gold'},
- {name:'Finance Agent',role:'Финансовый контроль',dept:'FINANCE',status:'idle',icon:CircleDollarSign,color:'green'},
- {name:'Quality Agent',role:'Проверка результатов',dept:'CONTROL',status:'online',icon:ShieldCheck,color:'cyan'}
+  { name: 'AI Director', role: 'Главный координатор', dept: 'HQ', status: 'online', icon: Command, color: 'blue' },
+  { name: 'Market Analyst', role: 'Исследование и аналитика', dept: 'TRADING', status: 'working', icon: ChartNoAxesCombined, color: 'cyan' },
+  { name: 'Dev Engineer', role: 'Разработка продуктов', dept: 'DEVELOPMENT', status: 'online', icon: Code2, color: 'violet' },
+  { name: 'Growth Agent', role: 'Маркетинг и контент', dept: 'MARKETING', status: 'idle', icon: Sparkles, color: 'gold' },
+  { name: 'Finance Agent', role: 'Финансовый контроль', dept: 'FINANCE', status: 'idle', icon: CircleDollarSign, color: 'green' },
+  { name: 'Quality Agent', role: 'Проверка результатов', dept: 'CONTROL', status: 'online', icon: ShieldCheck, color: 'cyan' },
 ];
-const initialActivity = [{time:'12:42',agent:'AI Director',text:'Система управления готова к запуску'},{time:'12:39',agent:'Market Analyst',text:'Ожидает первое аналитическое поручение'},{time:'12:35',agent:'Quality Agent',text:'Проверка модулей безопасности завершена'}];
+
+const initialActivity = [
+  { time: '12:42', agent: 'AI Director', text: 'Система управления готова к запуску' },
+  { time: '12:39', agent: 'Market Analyst', text: 'Ожидает первое аналитическое поручение' },
+  { time: '12:35', agent: 'Quality Agent', text: 'Проверка модулей безопасности завершена' },
+];
+
 export default function Home() {
- const [task,setTask]=useState(''); const [activities,setActivities]=useState(initialActivity); const [selected,setSelected]=useState('HQ'); const [busy,setBusy]=useState(false);
- const submit=async()=>{if(!task.trim()||busy)return;const value=task.trim();setBusy(true);setActivities(a=>[{time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),agent:'Ты',text:value},...a]);try{const res=await fetch('/api/agents/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:value})});const data=await res.json();setActivities(a=>[{time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),agent:'AI Director',text:data.output||data.error||'Задача обработана'},...a]);}catch{setActivities(a=>[{time:'—',agent:'Система',text:'Не удалось связаться с сервером агентов.'},...a]);}setTask('');setBusy(false);};
- return <main className="shell"><aside className="sidebar"><div className="brand"><div className="brandMark"><Cpu size={21}/></div><div><b>KD AI CITY</b><small>VIRTUAL HQ · 001</small></div></div><div className="navLabel">WORKSPACE</div><button className="nav active"><LayoutDashboard size={17}/> Обзор города</button><button className="nav" onClick={()=>setSelected('HQ')}><Building2 size={17}/> Отделы</button><button className="nav"><Users size={17}/> Сотрудники</button><button className="nav"><Workflow size={17}/> Процессы</button><button className="nav"><Activity size={17}/> Журнал действий</button><div className="sideBottom"><div className="connection"><span className="pulse"/> СИСТЕМА ГОТОВА</div><div className="profile"><div className="avatar">KD</div><div><b>Владелец</b><small>Administrator</small></div></div></div></aside>
- <section className="main"><header className="topbar"><div><div className="eyebrow">ВИРТУАЛЬНАЯ ШТАБ-КВАРТИРА</div><h1>Городской центр</h1></div><div className="topRight"><span className="live"><i/> LIVE SYSTEM</span><button className="iconButton"><Radio size={17}/></button></div></header>
- <div className="stats"><div className="stat"><span>АГЕНТЫ</span><b>06 <small>/ 06</small></b><em>Зарегистрированы в интерфейсе</em></div><div className="stat"><span>АКТИВНЫЕ ЗАДАЧИ</span><b>00</b><em>Нет фоновых задач</em></div><div className="stat"><span>ВЫПОЛНЕНО СЕГОДНЯ</span><b>00</b><em>Ожидает подключения журнала</em></div><div className="stat"><span>СОСТОЯНИЕ СИСТЕМЫ</span><b className="greenText">STARTER</b><em>Первый этап разработки</em></div></div>
- <div className="cityHead"><div><h2>Панорама города</h2><p>Поверни город мышью или пальцем</p></div><span className="coords">SECTOR 01 · NORTH DISTRICT</span></div><div className="cityWrap"><CityScene/><div className="sceneTag"><span className="pulse"/> 3D CITY SIMULATION <small>DRAG TO ROTATE · SCROLL TO ZOOM</small></div><div className="cityLegend"><span><i className="dotBlue"/> HQ</span><span><i className="dotCyan"/> DATA</span><span><i className="dotViolet"/> DEVELOPMENT</span><span><i className="dotGold"/> FINANCE</span></div></div>
- <div className="lower"><section className="panel"><div className="panelHead"><div><h3>Команда города</h3><p>Роли команды — подключение поэтапное</p></div><span className="count">06 ROLES</span></div><div className="agentList">{agents.map(a=>{const Icon=a.icon;return <button className={'agent '+(selected===a.dept?'chosen':'')} key={a.name} onClick={()=>setSelected(a.dept)}><div className={'agentIcon '+a.color}><Icon size={17}/></div><div className="agentInfo"><b>{a.name}</b><small>{a.role}</small></div><span className={'status '+a.status}>{a.status==='working'?'ПЛАНИРУЕТСЯ':a.status==='online'?'ИНТЕРФЕЙС':'В ПЛАНЕ'}</span></button>})}</div></section>
- <section className="panel"><div className="panelHead"><div><h3>Центр поручений</h3><p>Отправь задачу AI Director</p></div><span className="director"><Bot size={16}/> AI DIRECTOR</span></div><div className="taskBox"><textarea value={task} onChange={e=>setTask(e.target.value)} placeholder="Например: подготовь план продвижения KD Intelligence…"/><button className="send" onClick={submit} disabled={busy||!task.trim()}>{busy?'В РАБОТЕ':<>Отправить <Send size={15}/></>}</button></div><div className="activityTitle">ПОСЛЕДНИЕ СОБЫТИЯ · ТЕКУЩАЯ СЕССИЯ</div><div className="activityList">{activities.slice(0,4).map((a,i)=><div className="event" key={i}><span className="eventTime">{a.time}</span><div><b>{a.agent}</b><p>{a.text}</p></div></div>)}</div></section></div><footer>© 2026 KD AI CITY <span>BUILT FOR HUMAN DIRECTION</span></footer></section></main>;
+  const [task, setTask] = useState('');
+  const [accessKey, setAccessKey] = useState('');
+  const [activities, setActivities] = useState(initialActivity);
+  const [selected, setSelected] = useState('HQ');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!task.trim() || !accessKey.trim() || busy) return;
+
+    const value = task.trim();
+    setBusy(true);
+    setActivities((items) => [
+      {
+        time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+        agent: 'Ты',
+        text: value,
+      },
+      ...items,
+    ]);
+
+    try {
+      const response = await fetch('/api/agents/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessKey}`,
+        },
+        body: JSON.stringify({ task: value }),
+      });
+      const data = await response.json();
+
+      setActivities((items) => [
+        {
+          time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+          agent: response.ok ? 'AI Director' : 'Система',
+          text: data.output || data.error || 'Задача обработана',
+        },
+        ...items,
+      ]);
+    } catch {
+      setActivities((items) => [
+        { time: '—', agent: 'Система', text: 'Не удалось связаться с сервером агентов.' },
+        ...items,
+      ]);
+    } finally {
+      setTask('');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <main className="shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brandMark"><Cpu size={21} /></div>
+          <div><b>KD AI CITY</b><small>VIRTUAL HQ · 001</small></div>
+        </div>
+        <div className="navLabel">WORKSPACE</div>
+        <button className="nav active"><LayoutDashboard size={17} /> Обзор города</button>
+        <button className="nav" onClick={() => setSelected('HQ')}><Building2 size={17} /> Отделы</button>
+        <button className="nav"><Users size={17} /> Сотрудники</button>
+        <button className="nav"><Workflow size={17} /> Процессы</button>
+        <button className="nav"><Activity size={17} /> Журнал действий</button>
+        <div className="sideBottom">
+          <div className="connection"><span className="pulse" /> ДЕМО-РЕЖИМ</div>
+          <div className="profile">
+            <div className="avatar">KD</div>
+            <div><b>Владелец</b><small>Administrator</small></div>
+          </div>
+        </div>
+      </aside>
+
+      <section className="main">
+        <header className="topbar">
+          <div><div className="eyebrow">ВИРТУАЛЬНАЯ ШТАБ-КВАРТИРА</div><h1>Городской центр</h1></div>
+          <div className="topRight">
+            <span className="live"><i /> CITY PREVIEW</span>
+            <button className="iconButton"><Radio size={17} /></button>
+          </div>
+        </header>
+
+        <div className="stats">
+          <div className="stat"><span>РОЛИ КОМАНДЫ</span><b>06 <small>/ 06</small></b><em>Заданы в конфигурации</em></div>
+          <div className="stat"><span>АКТИВНЫЕ ЗАДАЧИ</span><b>00</b><em>Фоновые процессы ещё не подключены</em></div>
+          <div className="stat"><span>ВЫПОЛНЕНО СЕГОДНЯ</span><b>00</b><em>Постоянный журнал ещё не подключён</em></div>
+          <div className="stat"><span>СОСТОЯНИЕ СИСТЕМЫ</span><b className="greenText">STARTER</b><em>Первый этап разработки</em></div>
+        </div>
+
+        <div className="cityHead">
+          <div><h2>Панорама города</h2><p>Поверни город мышью или пальцем</p></div>
+          <span className="coords">SECTOR 01 · NORTH DISTRICT</span>
+        </div>
+        <div className="cityWrap">
+          <CityScene />
+          <div className="sceneTag"><span className="pulse" /> 3D CITY SIMULATION <small>DRAG TO ROTATE · SCROLL TO ZOOM</small></div>
+          <div className="cityLegend">
+            <span><i className="dotBlue" /> HQ</span>
+            <span><i className="dotCyan" /> DATA</span>
+            <span><i className="dotViolet" /> DEVELOPMENT</span>
+            <span><i className="dotGold" /> FINANCE</span>
+          </div>
+        </div>
+
+        <div className="lower">
+          <section className="panel">
+            <div className="panelHead">
+              <div><h3>Команда города</h3><p>Роли команды — подключение поэтапное</p></div>
+              <span className="count">06 ROLES</span>
+            </div>
+            <div className="agentList">
+              {agents.map((agent) => {
+                const Icon = agent.icon;
+                return (
+                  <button
+                    className={`agent ${selected === agent.dept ? 'chosen' : ''}`}
+                    key={agent.name}
+                    onClick={() => setSelected(agent.dept)}
+                  >
+                    <div className={`agentIcon ${agent.color}`}><Icon size={17} /></div>
+                    <div className="agentInfo"><b>{agent.name}</b><small>{agent.role}</small></div>
+                    <span className={`status ${agent.status}`}>
+                      {agent.status === 'working' ? 'ПЛАНИРУЕТСЯ' : agent.status === 'online' ? 'В КОНФИГУРАЦИИ' : 'В ПЛАНЕ'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="panel">
+            <div className="panelHead">
+              <div><h3>Центр поручений</h3><p>Отправь задачу AI Director</p></div>
+              <span className="director"><Bot size={16} /> AI DIRECTOR</span>
+            </div>
+            <div className="accessKeyBox">
+              <label htmlFor="owner-key">Ключ доступа владельца</label>
+              <input
+                id="owner-key"
+                type="password"
+                autoComplete="off"
+                value={accessKey}
+                onChange={(event) => setAccessKey(event.target.value)}
+                placeholder="Введи KD_AI_CITY_ACCESS_KEY"
+              />
+              <small>Ключ остаётся только в памяти этой вкладки и отправляется серверу вместе с поручением.</small>
+            </div>
+            <div className="taskBox">
+              <textarea
+                value={task}
+                onChange={(event) => setTask(event.target.value)}
+                placeholder="Например: подготовь план продвижения KD Intelligence…"
+              />
+              <button className="send" onClick={submit} disabled={busy || !task.trim() || !accessKey.trim()}>
+                {busy ? 'В РАБОТЕ' : <>Отправить <Send size={15} /></>}
+              </button>
+            </div>
+            <div className="activityTitle">ПОСЛЕДНИЕ СОБЫТИЯ · ТЕКУЩАЯ СЕССИЯ</div>
+            <div className="activityList">
+              {activities.slice(0, 4).map((activity, index) => (
+                <div className="event" key={index}>
+                  <span className="eventTime">{activity.time}</span>
+                  <div><b>{activity.agent}</b><p>{activity.text}</p></div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+        <footer>© 2026 KD AI CITY <span>BUILT FOR HUMAN DIRECTION</span></footer>
+      </section>
+    </main>
+  );
 }
