@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await run(director, task);
+    const result = await run(director, task, { maxTurns: 8 });
     return NextResponse.json({
       output: result.finalOutput ?? 'Агент завершил запуск без текстового результата.',
     });
