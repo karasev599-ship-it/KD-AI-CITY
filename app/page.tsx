@@ -18,9 +18,11 @@ const agents = [
 ];
 
 const initialActivity = [
-  { time: '12:42', agent: 'AI Director', text: 'Система управления готова к запуску' },
-  { time: '12:39', agent: 'Market Analyst', text: 'Ожидает первое аналитическое поручение' },
-  { time: '12:35', agent: 'Quality Agent', text: 'Проверка модулей безопасности завершена' },
+  {
+    time: '—',
+    agent: 'Система',
+    text: 'Демонстрационный журнал. Реальные события появятся после подключения постоянного хранилища.',
+  },
 ];
 
 export default function Home() {
