@@ -5,6 +5,44 @@ import { director } from '@/lib/agents';
 
 export const runtime = 'nodejs';
 
+async function readBodyWithinLimit(request: Request, maxBytes: number): Promise<string | null> {
+  const contentLength = request.headers.get('content-length');
+  if (contentLength && Number(contentLength) > maxBytes) return null;
+
+  const reader = request.body?.getReader();
+  if (!reader) return '';
+
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      totalBytes += value.byteLength;
+      if (totalBytes > maxBytes) {
+        await reader.cancel().catch(() => undefined);
+        return null;
+      }
+
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return new TextDecoder().decode(body);
+}
+
 function hasValidOwnerKey(request: Request) {
   const expectedKey = process.env.KD_AI_CITY_ACCESS_KEY;
   const authorization = request.headers.get('authorization') ?? '';
@@ -41,8 +79,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const rawBody = await request.text();
-    if (Buffer.byteLength(rawBody, 'utf8') > 8192) {
+    const rawBody = await readBodyWithinLimit(request, 8192);
+    if (rawBody === null) {
       return NextResponse.json({ error: 'Запрос слишком большой.' }, { status: 413 });
     }
 
