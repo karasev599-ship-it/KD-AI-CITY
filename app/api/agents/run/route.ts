@@ -79,6 +79,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const contentType = request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
+    if (contentType !== 'application/json') {
+      return NextResponse.json(
+        { error: 'Поддерживаются только запросы с Content-Type: application/json.' },
+        { status: 415 }
+      );
+    }
+
     const rawBody = await readBodyWithinLimit(request, 8192);
     if (rawBody === null) {
       return NextResponse.json({ error: 'Запрос слишком большой.' }, { status: 413 });
